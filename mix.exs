@@ -1,9 +1,9 @@
-defmodule Buckaro.MixProject do
+defmodule Buckaroo.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :buckaro,
+      app: :buckaroo,
       version: "0.0.1",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,

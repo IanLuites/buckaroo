@@ -1,4 +1,4 @@
-defmodule Buckaro do
+defmodule Buckaroo do
   @moduledoc ~S"""
   Simple `:cowboy` (v2) webserver with support for websockets.
   """

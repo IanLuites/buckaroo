@@ -1,4 +1,4 @@
-defmodule Buckaro.Router do
+defmodule Buckaroo.Router do
   @moduledoc ~S"""
   An extension to `Plug.Router` now also supporting `websocket`.
   """
@@ -7,15 +7,15 @@ defmodule Buckaro.Router do
   defmacro __using__(opts) do
     quote location: :keep do
       use Plug.Router, unquote(opts)
-      import Buckaro.Router, only: [websocket: 2]
-      @before_compile Buckaro.Router
+      import Buckaroo.Router, only: [websocket: 2]
+      @before_compile Buckaroo.Router
     end
   end
 
   @doc false
   defmacro __before_compile__(_env) do
     quote do
-      import Buckaro.Router, only: []
+      import Buckaroo.Router, only: []
     end
   end
 

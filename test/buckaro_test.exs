@@ -1,8 +1,8 @@
-defmodule BuckaroTest do
+defmodule BuckarooTest do
   use ExUnit.Case
-  doctest Buckaro
+  doctest Buckaroo
 
   test "greets the world" do
-    assert Buckaro.hello() == :world
+    assert Buckaroo.hello() == :world
   end
 end

@@ -1,4 +1,4 @@
-defmodule Buckaro.Socket do
+defmodule Buckaroo.Socket do
   @moduledoc ~S"""
   A simple websocket implementation.
   """
@@ -45,18 +45,18 @@ defmodule Buckaro.Socket do
   @doc false
   defmacro __using__(_opts \\ []) do
     quote do
-      @behaviour Buckaro.Socket
+      @behaviour Buckaroo.Socket
 
-      @impl Buckaro.Socket
+      @impl Buckaroo.Socket
       def init(_conn, state), do: {:ok, state}
 
-      @impl Buckaro.Socket
+      @impl Buckaroo.Socket
       def handle(_frame, state), do: {:ok, state}
 
-      @impl Buckaro.Socket
+      @impl Buckaroo.Socket
       def info(_message, state), do: {:ok, state}
 
-      @impl Buckaro.Socket
+      @impl Buckaroo.Socket
       def terminate(_, _, _), do: :ok
 
       defoverridable init: 2, handle: 2, info: 2, terminate: 3
