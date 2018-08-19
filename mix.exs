@@ -4,25 +4,55 @@ defmodule Buckaroo.MixProject do
   def project do
     [
       app: :buckaroo,
+      description: "Simple `:cowboy` (v2) webserver with support for websockets.",
       version: "0.0.1",
       elixir: "~> 1.7",
+      build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package(),
+
+      # Docs
+      name: "buckaroo",
+      source_url: "https://github.com/IanLuites/buckaroo",
+      homepage_url: "https://github.com/IanLuites/buckaroo",
+      docs: [
+        main: "readme",
+        extras: ["README.md", "LICENSE.md"]
+      ]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
+  def package do
+    [
+      name: :buckaroo,
+      maintainers: ["Ian Luites"],
+      licenses: ["MIT"],
+      files: [
+        # Elixir
+        "lib/buckaroo",
+        "lib/buckaroo.ex",
+        "mix.exs",
+        "README*",
+        "LICENSE*"
+      ],
+      links: %{
+        "GitHub" => "https://github.com/IanLuites/buckaroo"
+      }
+    ]
+  end
+
   def application do
     [
       extra_applications: [:logger]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:cowboy, "~> 2.4"},
-      {:plug, "~> 1.6"}
+      {:plug, "~> 1.6"},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 end
