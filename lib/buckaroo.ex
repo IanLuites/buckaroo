@@ -95,7 +95,11 @@ defmodule Buckaroo do
     do: info |> socket.info(state) |> result(socket)
 
   @impl :cowboy_websocket
-  def terminate(reason, req, {socket, state}), do: socket.terminate(reason, req, state)
+  def terminate(reason, req, {socket, state}) do
+    if :erlang.function_exported(socket, :terminate, 3),
+      do: socket.terminate(reason, req, state),
+      else: :ok
+  end
 
   @spec result(tuple, module) :: tuple
   defp result({:stop, state}, socket), do: {:stop, {socket, state}}
