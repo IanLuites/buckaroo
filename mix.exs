@@ -5,7 +5,7 @@ defmodule Buckaroo.MixProject do
     [
       app: :buckaroo,
       description: "Simple `:cowboy` (v2) webserver with support for websockets.",
-      version: "0.0.2",
+      version: "0.0.3",
       elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -34,7 +34,8 @@ defmodule Buckaroo.MixProject do
         "lib/buckaroo.ex",
         "mix.exs",
         "README*",
-        "LICENSE*"
+        "LICENSE*",
+        ".formatter.exs"
       ],
       links: %{
         "GitHub" => "https://github.com/IanLuites/buckaroo"
