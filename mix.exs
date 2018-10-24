@@ -5,7 +5,7 @@ defmodule Buckaroo.MixProject do
     [
       app: :buckaroo,
       description: "Simple `:cowboy` (v2) webserver with support for websockets.",
-      version: "0.0.3",
+      version: "0.1.0",
       elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -51,9 +51,8 @@ defmodule Buckaroo.MixProject do
 
   defp deps do
     [
-      {:cowboy, "~> 2.4"},
-      {:plug, "~> 1.6"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:plug_cowboy, "~> 2.0"},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 end

@@ -2,7 +2,7 @@ defmodule Buckaroo do
   @moduledoc ~S"""
   Simple `:cowboy` (v2) webserver with support for websockets.
   """
-  alias Plug.Adapters.Cowboy2
+  alias Plug.Adapters.Cowboy
 
   @doc ~S"""
   Setup a simple webserver handling HTTP requests including websockets.
@@ -20,11 +20,11 @@ defmodule Buckaroo do
         opts |> Keyword.delete(:socket) |> Keyword.delete(:plug) |> Keyword.delete(:opts)
       )
 
-    {Cowboy2, scheme: :http, plug: elem(router, 0), options: options}
+    {Cowboy, scheme: :http, plug: elem(router, 0), options: options}
   end
 
   ### Handler ###
-  @connection Plug.Adapters.Cowboy2.Conn
+  @connection Plug.Cowboy.Conn
   @already_sent {:plug_conn, :sent}
   @behaviour :cowboy_websocket
 
