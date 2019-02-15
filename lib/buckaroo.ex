@@ -15,10 +15,9 @@ defmodule Buckaroo do
     socket = if s = opts[:socket], do: {s, opts[:socket_opts] || opts[:opts] || []}
 
     options =
-      Keyword.merge(
-        [port: 3000, dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]],
-        opts |> Keyword.delete(:socket) |> Keyword.delete(:plug) |> Keyword.delete(:opts)
-      )
+      [port: 3000, dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]]
+      |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
+      |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
 
     {Cowboy, scheme: :http, plug: elem(router, 0), options: options}
   end
