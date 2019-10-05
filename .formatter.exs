@@ -1,4 +1,5 @@
 locals_without_parens = [
+  sse: 2,
   websocket: 2
 ]
 
