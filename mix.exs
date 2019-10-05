@@ -4,7 +4,7 @@ defmodule Buckaroo.MixProject do
   def project do
     [
       app: :buckaroo,
-      description: "Simple `:cowboy` (v2) webserver with support for websockets.",
+      description: "Simple `:cowboy` (v2) webserver with support for SSE and WebSockets.",
       version: "0.2.0",
       elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
