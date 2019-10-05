@@ -15,7 +15,12 @@ defmodule Buckaroo do
     socket = if s = opts[:socket], do: {s, opts[:socket_opts] || opts[:opts] || []}
 
     options =
-      [port: 3000, dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]]
+      [
+        port: 3000,
+        compress: true,
+        protocol_options: [idle_timeout: :infinity],
+        dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]
+      ]
       |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
       |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
 
@@ -43,6 +48,12 @@ defmodule Buckaroo do
         nil ->
           %{adapter: {@connection, req}} = maybe_send(conn, plug)
           {:ok, req, {plug, opts}}
+
+        {:sse, {socket, opts}} ->
+          sse_init(conn, socket, opts)
+
+        {:sse, socket} ->
+          sse_init(conn, socket)
 
         {socket, opts} ->
           {:cowboy_websocket, req, {socket, {conn, opts}}}
@@ -93,6 +104,7 @@ defmodule Buckaroo do
   def websocket_info(info, {socket, state}),
     do: info |> socket.info(state) |> result(socket)
 
+  # Note: terminate overlaps with loop handler (SSE) terminate
   @impl :cowboy_websocket
   def terminate(reason, req, {socket, state}) do
     if :erlang.function_exported(socket, :terminate, 3),
@@ -108,4 +120,66 @@ defmodule Buckaroo do
 
   defp result({:reply, frame, state, :hibernate}, socket),
     do: {:reply, frame, {socket, state}, :hibernate}
+
+  ## Loop Handler
+
+  @spec sse_init(term, module, term) :: tuple
+  defp sse_init(c, handler, opts \\ []) do
+    {:ok, conn, state} =
+      case handler.init(c, opts) do
+        {:ok, s} -> {:ok, c, s}
+        {:ok, updated_c, s} -> {:ok, updated_c, s}
+      end
+
+    %{adapter: {_, req}} =
+      conn
+      |> Plug.Conn.put_resp_content_type("text/event-stream")
+      |> Plug.Conn.put_resp_header("cache-control", "no-cache")
+      |> Plug.Conn.send_chunked(200)
+
+    {:cowboy_loop, req, {handler, state}, :hibernate}
+  end
+
+  @spec info(term, map, {module, term}) :: tuple
+  def info(:eof, req, s = {handler, state}) do
+    handler.terminate(:eof, req, state)
+    {:stop, req, {handler, s}}
+  end
+
+  def info(msg, req, {handler, state}) do
+    case handler.info(msg, state) do
+      {:ok, s} -> {:ok, req, {handler, s}}
+      {:ok, s, :hibernate} -> {:ok, req, {handler, s}, :hibernate}
+      {:reply, events, s} -> {:ok, send_events(req, events), {handler, s}}
+      {:reply, events, s, :hibernate} -> {:ok, send_events(req, events), {handler, s}, :hibernate}
+      {:stop, s} -> {:stop, req, {handler, s}}
+    end
+  end
+
+  @spec send_events(map, [map] | map) :: map
+  defp send_events(req, events) when is_list(events),
+    do: Enum.reduce(events, req, &send_events(&2, &1))
+
+  defp send_events(req, event) do
+    :cowboy_req.stream_body(sse_event(event), :nofin, req)
+    req
+  end
+
+  defp sse_event(%{id: id, event: event, retry: retry, data: data}),
+    do: "id: #{id}\nevent: #{event}\nretry: #{retry}\ndata: #{data}\n\n"
+
+  defp sse_event(%{id: id, event: event, data: data}),
+    do: "id: #{id}\nevent: #{event}\ndata: #{data}\n\n"
+
+  defp sse_event(%{event: event, retry: retry, data: data}),
+    do: "event: #{event}\nretry: #{retry}\ndata: #{data}\n\n"
+
+  defp sse_event(%{id: id, retry: retry, data: data}),
+    do: "id: #{id}\nretry: #{retry}\ndata: #{data}\n\n"
+
+  defp sse_event(%{id: id, data: data}), do: "id: #{id}\ndata: #{data}\n\n"
+  defp sse_event(%{event: event, data: data}), do: "event: #{event}\ndata: #{data}\n\n"
+  defp sse_event(%{retry: retry, data: data}), do: "retry: #{retry}\ndata: #{data}\n\n"
+  defp sse_event(%{data: data}), do: "data: #{data}\n\n"
+  defp sse_event(data), do: "data: #{data}\n\n"
 end
