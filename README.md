@@ -1,6 +1,6 @@
 # Buckaroo
 
-Simple `:cowboy` (v2) webserver with support for websockets.
+Simple `:cowboy` (v2) webserver with support for SSE and WebSockets.
 
 ## Quick Setup
 
@@ -57,6 +57,21 @@ const es = new EventSource('/sse/time');
 es.addEventListener('time', event => {
   console.log('system time', event.data);
 });
+```
+
+
+## Note
+
+If connections are being disconnected,
+it might be necessary to set the `:idle_timeout`
+to avoid timeouts.
+
+This will definitely be relevant when using SSE EventSources.
+The `:idle_timeout` can be set to `:infinity` to avoid timeouts.
+
+Example:
+```elixir
+Buckaroo.child_spec(plug: MyRouter, protocol_options: [idle_timeout: :infinity])
 ```
 
 ## Installation

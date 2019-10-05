@@ -8,13 +8,28 @@ defmodule Buckaroo.Router do
     quote location: :keep do
       use Plug.Router, unquote(opts)
       import Buckaroo.Router, only: [sse: 2, websocket: 2]
+      Module.register_attribute(__MODULE__, :plug_forwards, accumulate: true)
+      @on_definition {Buckaroo.Router, :on_def}
       @before_compile Buckaroo.Router
+      @has_sse_route false
     end
   end
 
   @doc false
   defmacro __before_compile__(_env) do
     quote do
+      @doc false
+      @spec __sse__ :: boolean
+      if @has_sse_route do
+        def __sse__, do: true
+      else
+        def __sse__ do
+          Enum.any?(@plug_forwards, fn plug ->
+            {:__sse__, 0} in plug.__info__(:functions) and plug.__sse__()
+          end)
+        end
+      end
+
       import Buckaroo.Router, only: []
     end
   end
@@ -109,8 +124,24 @@ defmodule Buckaroo.Router do
 
         Plug.Router.__put_route__(conn, unquote(path), fn var!(conn), _ -> unquote(body) end)
       end
+
+      @has_sse_route true
     end
   end
+
+  @doc false
+  @spec on_def(term, :def | :defp, atom, term, term, term) :: term
+  # credo:disable-for-next-line
+  def on_def(env, :defp, :do_match, [{:conn, _, Plug.Router}, _method, _path, _], _guards, _body) do
+    if forward = Module.get_attribute(env.module, :plug_forward_target) do
+      unless forward in Module.get_attribute(env.module, :plug_forwards) do
+        Module.put_attribute(env.module, :plug_forwards, forward)
+      end
+    end
+  end
+
+  # credo:disable-for-next-line
+  def on_def(_env, _type, _name, _args, _guards, _body), do: :ignore
 
   # Extract the path and guards from the path.
   defp extract_path_and_guards({:when, _, [path, guards]}), do: {extract_path(path), guards}

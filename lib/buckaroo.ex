@@ -3,6 +3,7 @@ defmodule Buckaroo do
   Simple `:cowboy` (v2) webserver with support for websockets.
   """
   alias Plug.Adapters.Cowboy
+  require Logger
 
   @doc ~S"""
   Setup a simple webserver handling HTTP requests including websockets.
@@ -10,7 +11,29 @@ defmodule Buckaroo do
   @spec child_spec(Keyword.t()) :: Supervisor.child_spec()
   def child_spec(opts \\ []) do
     router =
+      {plug, _} =
       {opts[:plug] || raise("Need to set plug: ... to the plug router."), opts[:opts] || []}
+
+    if {:__sse__, 0} in plug.__info__(:functions) and plug.__sse__() do
+      p = opts[:protocol_options] || []
+
+      unless p[:idle_timeout] == :infinity do
+        Logger.warn(fn ->
+          """
+          Buckaroo: serving SSE events, but `:idle_timeout` is not set to `:infinity`.
+
+            This causes SSE EventSources to disconnect after the timeout passes.
+
+            Please pass `protocol_options: [idle_timeout: :infinity]`
+            to prevent disconnect after idle timeout.
+
+            Example:
+
+              Buckaroo.child_spec(plug: MyRouter, protocol_options: [idle_timeout: :infinity])
+          """
+        end)
+      end
+    end
 
     socket = if s = opts[:socket], do: {s, opts[:socket_opts] || opts[:opts] || []}
 
@@ -18,7 +41,6 @@ defmodule Buckaroo do
       [
         port: 3000,
         compress: true,
-        protocol_options: [idle_timeout: :infinity],
         dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]
       ]
       |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
