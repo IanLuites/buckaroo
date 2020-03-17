@@ -2,7 +2,7 @@ defmodule Buckaroo do
   @moduledoc ~S"""
   Simple `:cowboy` (v2) webserver with support for websockets.
   """
-  alias Plug.Adapters.Cowboy
+  alias Plug.Cowboy
   require Logger
 
   @doc ~S"""
@@ -46,7 +46,7 @@ defmodule Buckaroo do
       |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
       |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
 
-    {Cowboy, scheme: :http, plug: elem(router, 0), options: options}
+    Cowboy.child_spec([scheme: :http, plug: elem(router, 0)] ++ options)
   end
 
   ### Handler ###
