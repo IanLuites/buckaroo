@@ -84,17 +84,8 @@ defmodule Buckaroo do
           {:cowboy_websocket, req, {socket, {conn, []}}}
       end
     catch
-      :error, value ->
-        stack = System.stacktrace()
-        exception = Exception.normalize(:error, value, stack)
-        exit({{exception, stack}, {plug, :call, [conn, opts]}})
-
-      :throw, value ->
-        stack = System.stacktrace()
-        exit({{{:nocatch, value}, stack}, {plug, :call, [conn, opts]}})
-
-      :exit, value ->
-        exit({value, {plug, :call, [conn, opts]}})
+      kind, reason ->
+        exit_on_error(kind, reason, __STACKTRACE__, {plug, :call, [conn, opts]})
     after
       receive do
         @already_sent -> :ok
@@ -113,6 +104,28 @@ defmodule Buckaroo do
             inspect(other)
   end
 
+  defp exit_on_error(
+         :error,
+         %Plug.Conn.WrapperError{kind: kind, reason: reason, stack: stack},
+         _stack,
+         call
+       ) do
+    exit_on_error(kind, reason, stack, call)
+  end
+
+  defp exit_on_error(:error, value, stack, call) do
+    exception = Exception.normalize(:error, value, stack)
+    :erlang.raise(:exit, {{exception, stack}, call}, [])
+  end
+
+  defp exit_on_error(:throw, value, stack, call) do
+    :erlang.raise(:exit, {{{:nocatch, value}, stack}, call}, [])
+  end
+
+  defp exit_on_error(:exit, value, _stack, call) do
+    :erlang.raise(:exit, {value, call}, [])
+  end
+
   ### Handling Socket ###
 
   @impl :cowboy_websocket
@@ -128,11 +141,15 @@ defmodule Buckaroo do
 
   # Note: terminate overlaps with loop handler (SSE) terminate
   @impl :cowboy_websocket
-  def terminate(reason, req, {socket, state}) do
+  def terminate(reason, req, state)
+
+  def terminate(reason, req, {socket, state}) when is_atom(socket) do
     if :erlang.function_exported(socket, :terminate, 3),
       do: socket.terminate(reason, req, state),
       else: :ok
   end
+
+  def terminate(_, _, _), do: :ok
 
   @spec result(tuple, module) :: tuple
   defp result({:stop, state}, socket), do: {:stop, {socket, state}}
