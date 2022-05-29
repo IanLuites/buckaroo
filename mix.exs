@@ -51,7 +51,7 @@ defmodule Buckaroo.MixProject do
 
   defp deps do
     [
-      {:plug_cowboy, "~> 2.3"},
+      {:plug_cowboy, "~> 2.5"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end

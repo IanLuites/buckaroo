@@ -10,6 +10,8 @@ defmodule Buckaroo do
   """
   @spec child_spec(Keyword.t()) :: Supervisor.child_spec()
   def child_spec(opts \\ []) do
+    {decode?, opts} = Keyword.pop(opts, :decode_path, false)
+
     router =
       {plug, _} =
       {opts[:plug] || raise("Need to set plug: ... to the plug router."), opts[:opts] || []}
@@ -41,7 +43,7 @@ defmodule Buckaroo do
       [
         port: 3000,
         compress: true,
-        dispatch: [{:_, [{:_, __MODULE__, {socket || router, router}}]}]
+        dispatch: [{:_, [{:_, __MODULE__, {socket || router, router, decode?}}]}]
       ]
       |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
       |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
@@ -55,7 +57,9 @@ defmodule Buckaroo do
   @behaviour :cowboy_websocket
 
   @impl :cowboy_websocket
-  def init(req, {{socket, socket_opts}, {plug, plug_opts}}) do
+  def init(req, {{socket, socket_opts}, {plug, plug_opts}, decode?}) do
+    req = if decode?, do: %{req | path: URI.decode(req.path)}, else: req
+
     {conn, plug, opts} =
       if :cowboy_websocket.is_upgrade_request(req) do
         {%{@connection.conn(req) | method: "WEBSOCKET"}, socket, socket_opts}
