@@ -51,14 +51,14 @@ end
 
 with SSE it is now possible to subscribe to these time events
 in the browser with the following JavaScript:
-```javascript
-const es = new EventSource('/sse/time');
 
-es.addEventListener('time', event => {
-  console.log('system time', event.data);
+```javascript
+const es = new EventSource("/sse/time");
+
+es.addEventListener("time", (event) => {
+  console.log("system time", event.data);
 });
 ```
-
 
 ## Note
 
@@ -70,6 +70,7 @@ This will definitely be relevant when using SSE EventSources.
 The `:idle_timeout` can be set to `:infinity` to avoid timeouts.
 
 Example:
+
 ```elixir
 Buckaroo.child_spec(plug: MyRouter, protocol_options: [idle_timeout: :infinity])
 ```
@@ -82,7 +83,7 @@ by adding `buckaroo` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:buckaroo, "~> 0.2.0"}
+    {:buckaroo, "~> 0.4.0"}
   ]
 end
 ```
