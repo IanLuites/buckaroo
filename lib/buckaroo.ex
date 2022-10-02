@@ -48,11 +48,18 @@ defmodule Buckaroo do
 
     socket = if s = opts[:socket], do: {s, opts[:socket_opts] || opts[:opts] || []}
 
+    match =
+      if prefix = opts[:prefix] do
+        String.to_charlist(prefix)
+      else
+        :_
+      end
+
     options =
       [
         port: 3000,
         compress: true,
-        dispatch: [{:_, [{:_, __MODULE__, {socket || router, router, decode?}}]}]
+        dispatch: [{:_, [{match, __MODULE__, {socket || router, router, decode?}}]}]
       ]
       |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
       |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
