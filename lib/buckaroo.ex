@@ -6,6 +6,15 @@ defmodule Buckaroo do
   require Logger
 
   @doc ~S"""
+  Start a simple webserver handling HTTP requests including websockets.
+  """
+  @spec start_link(Keyword.t()) :: term
+  def start_link(opts \\ []) do
+    %{start: {m, f, a}} = child_spec(opts)
+    apply(m, f, a)
+  end
+
+  @doc ~S"""
   Setup a simple webserver handling HTTP requests including websockets.
   """
   @spec child_spec(Keyword.t()) :: Supervisor.child_spec()
