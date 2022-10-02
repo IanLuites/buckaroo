@@ -61,7 +61,7 @@ defmodule Buckaroo do
         compress: true,
         dispatch: [{:_, [{match, __MODULE__, {socket || router, router, decode?}}]}]
       ]
-      |> Keyword.merge(Keyword.drop(opts, ~w(socket plug opts)a))
+      |> Keyword.merge(Keyword.drop(opts, ~w(prefix socket plug opts)a))
       |> Keyword.update!(:port, &if(is_binary(&1), do: String.to_integer(&1), else: &1))
 
     Cowboy.child_spec([scheme: :http, plug: elem(router, 0)] ++ options)
